@@ -12,7 +12,6 @@ class Post(BaseModel): #post class to handle validation of posts
     content: str
     published: bool = True
     rating: Optional[int] = None
-    id: int
 
 
 
@@ -30,12 +29,12 @@ def get_posts():
 
 @app.post("/post")
 def create_post(post: Post):
-    print(post.model_dump())#prints new post to consol asa dictionary
-    my_posts.append(post.model_dump())#adds new post to array
-    print("////////////////////////////////////////")
-    print(post)#only prints infro from new post in consol
-    return {"data": post}#return the whole post to display on postman
+    post_dict = post.model_dump()
+    post_dict["id"] = randrange(0, 999999999)
+    print(post_dict["id"])
+    my_posts.append(post_dict)
+    return {"data": post_dict}#return the whole post to display on postman
 
 
 #TODO : Create data base to actually store posts
-#TODO : make shure the post ID are always unique
+
