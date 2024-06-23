@@ -1,4 +1,5 @@
 from fastapi import FastAPI
+from fastapi.params import Body
 
 app = FastAPI()
 
@@ -10,3 +11,10 @@ async def root(): #init the function and specify its name
 @app.get("/post")
 def get_posts():
     return{"data": "This is your post!"}
+
+@app.post("/createpost")
+def create_post(payLoad: dict = Body):
+    print(payLoad)
+    return{"new-post": f"Title: {payLoad['Title']}; Content: {payLoad['Content']}"}#function to create a post, post details made in postman
+
+#TODO : Create data base to actually store posts
