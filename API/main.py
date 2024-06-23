@@ -1,7 +1,16 @@
 from fastapi import FastAPI
 from fastapi.params import Body
+from pydantic import BaseModel
 
 app = FastAPI()
+
+
+class Post(BaseModel): #post class to handle validation of posts
+    title: str
+    content: str
+    published: bool = True
+
+
 
 
 @app.get("/") #decorator references app(instance of fats API you are using) and specifys file path to the changes you are making
@@ -13,8 +22,9 @@ def get_posts():
     return{"data": "This is your post!"}
 
 @app.post("/createpost")
-def create_post(payLoad: dict = Body):
-    print(payLoad)
-    return{"new-post": f"Title: {payLoad['Title']}; Content: {payLoad['Content']}"}#function to create a post, post details made in postman
+def create_post(new_post: Post):
+    print(new_post.title)
+    return {"data": "new post"}
+
 
 #TODO : Create data base to actually store posts
