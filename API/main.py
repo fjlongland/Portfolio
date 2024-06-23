@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 from fastapi.params import Body
 from pydantic import BaseModel
+from typing import Optional
 
 app = FastAPI()
 
@@ -9,6 +10,7 @@ class Post(BaseModel): #post class to handle validation of posts
     title: str
     content: str
     published: bool = True
+    rating: Optional[int] = None
 
 
 
@@ -22,9 +24,11 @@ def get_posts():
     return{"data": "This is your post!"}
 
 @app.post("/createpost")
-def create_post(new_post: Post):
-    print(new_post.title)
-    return {"data": "new post"}
+def create_post(post: Post):
+    print(post.dict())#prints new post to consol asa dictionary
+    print("////////////////////////////////////////")
+    print(post)#only prints infro from new post in consol
+    return {"data": post}#return the whole post to display on postman
 
 
 #TODO : Create data base to actually store posts
