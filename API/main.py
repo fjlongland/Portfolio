@@ -25,6 +25,11 @@ def findPost(id):  # simple for loop to find post with ID: id
         if p["id"] == id:
             return p
 
+def findIndex(id):     # function to delete a post when given a specific post ID
+    for i, p in enumerate(my_posts): #this functionality wil change when we start saving posts in an actual databaase
+        if p["id"] == id:
+            return i
+
 @app.get("/") #decorator references app(instance of fats API you are using) and specifys file path to the changes you are making
 async def root(): #init the function and specify its name
     return{"message:" "Hi There trveler!"} #code that runs in the function and makes changes at specified destiantion
@@ -57,5 +62,10 @@ def get_post(id: int, response: Response):  #you can validage the input like thi
     return{"post": wpost}
 
 
-#TODO : Create data base to actually store posts
-
+@app.delete("/post/{id}") #pretty simple to delete  post at this point, especially as posts are just saved in an array
+def delete_post(id: int):
+    index = findIndex(id)
+    if index == None:
+         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"No post exists with ID: {id}")
+    my_posts.pop(index)
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
