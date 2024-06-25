@@ -1,4 +1,4 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Response, status, HTTPException
 from fastapi.params import Body
 from pydantic import BaseModel
 from typing import Optional
@@ -33,8 +33,8 @@ async def root(): #init the function and specify its name
 def get_posts():
     return{"data": my_posts}#in postman now displays whole array as json array
 
-@app.post("/post")
-def create_post(post: Post):
+@app.post("/post", status_code=status.HTTP_201_CREATED)
+def create_post(post: Post, response: Response):
     post_dict = post.model_dump()
     post_dict["id"] = randrange(0, 999999999)
     print(post_dict["id"])
@@ -44,10 +44,16 @@ def create_post(post: Post):
 
 
 @app.get("/post/{id}")
-def get_post(id: int):  #you can validage the input like this to make shure an int has been input(wors for all data types)
-    print(id)
+def get_post(id: int, response: Response):  #you can validage the input like this to make shure an int has been input(wors for all data types)
+    print(id)                               #make a response variable
     wpost = findPost(id)  #calls function to find post with ID: id
-    print(wpost)  
+    if wpost == None:
+        print("KYS")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Post with ID: {id} was not found") #this does the same thing but better than the commented code V
+        #response.status_code = status.HTTP_404_NOT_FOUND  #this is how you ste the status code to be accurate
+        #return{"message": f"Post with ID: {id} was not found"}
+    else:
+        print(wpost)  
     return{"post": wpost}
 
 
