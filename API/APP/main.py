@@ -3,8 +3,9 @@ from fastapi.params import Body
 from pydantic import BaseModel
 from typing import Optional
 from random import randrange
-import psycopg;
-#from psycopg.extras import RealDictCursor
+import psycopg2;
+from psycopg2.extras import RealDictCursor
+import time
 
 
 #/////////////////////////////////////////////////////////////////////////////
@@ -20,14 +21,16 @@ class Post(BaseModel): #post class to handle validation of posts
     content: str
     published: bool = True
 
-
-try:
-    conn = psycopg.connect(host = 'localhost', dbname = 'API(tut)_DB', user = 'postgres', password = '4u2nV@5302P'),  #cursor_factory=RealDictCursor)
-    #cursor = conn.cursor()
-    print("Connection Successful!")
-except Exception as error:
-    print("Connection Failed, Too Bad")
-    print("Error: ", error)
+while True:
+    try:
+        conn = psycopg2.connect(host = 'localhost', dbname = 'API(tut)_DB', user = 'postgres', password = '4u2nV@5302P', cursor_factory=RealDictCursor)
+        cursor = conn.cursor()
+        print("Connection Successful!")
+        break
+    except Exception as error:
+        print("Connection Failed, Too Bad")
+        print("Error: ", error)
+        time .sleep(2)
 
 
 
@@ -52,7 +55,10 @@ async def root(): #init the function and specify its name
 
 @app.get("/post")
 def get_posts():
-    return{"data": my_posts}#in postman now displays whole array as json array
+    cursor.execute("""SELECT * FROM posts""")
+    posts = cursor.fetchall()
+    print(posts)
+    return{"data": posts}#in postman now displays whole array as json array
 
 @app.post("/post", status_code=status.HTTP_201_CREATED)
 def create_post(post: Post, response: Response):
@@ -97,7 +103,9 @@ def update_post(id: int, post: Post):
     my_posts[index] = post_dict
     return{"message": f"Posta ID: {id}, has been updated"}
 
+#//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
+     
 
 #uvicorn API.APP.main:app --reload
