@@ -51,8 +51,11 @@ while True:
 #///////////////////////////// FUNCTIONS ///////////////////////////////////////////////////////////////////////////
 
 def findPost(id):  # simple for loop to find post with ID: id 
-    cursor.execute("""SELECT * FROM posts WHERE id = %s""", (str(id)))   
-    p = cursor.fetchone()
+    try:
+        cursor.execute("""SELECT * FROM posts WHERE id = %s""", (str(id)))   
+        p = cursor.fetchone()
+    except:
+        p = None
     return p
 
 #def findIndex(id):     # function to delete a post when given a specific post ID
@@ -98,16 +101,23 @@ def get_post(id: int, response: Response):  #you can validage the input like thi
 
 @app.delete("/post/{id}") #pretty simple to delete  post at this point, especially as posts are just saved in an array
 def delete_post(id: int):
-    cursor.execute(""" DELETE FROM posts WHERE id = %s""", (str(id)))
-    conn.commit()
+    try:
+        cursor.execute(""" DELETE FROM posts WHERE id = %s""", (str(id)))
+        conn.commit()
+    except:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
 @app.put("/post/{id}") #Functionality for updating posts
 def update_post(id: int, post: Post):
-    cursor.execute("""UPDATE posts SET title = %s, content = %s, published = %s WHERE id = %s""", (post.title, post.content, post.published, (str(id))))
-    conn.commit()
-    return{"message": f"Posta ID: {id}, has been updated"}
+    cursor.execute("""UPDATE posts SET title = %s, content = %s, published = %s WHERE id = %s RETURNING *""", (post.title, post.content, post.published, (str(id))))
+    uPost = cursor.fetchone()
+    if uPost == None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
+    else:
+        conn.commit()
+    return{"data": uPost}
 
 #///////////////////////////////  NOTES  //////////////////////////////////////////////////////////
 
