@@ -13,14 +13,19 @@ import time
 #/////////////////////////////////////////////////////////////////////////////
 #use http://127.0.0.1:8000/redoc for a reformatted version of this documentation
 
-app = FastAPI()
 
+
+#///////////////////////////  CLASSES  ////////////////////////////////////////////////////////////
+
+app = FastAPI()
 
 class Post(BaseModel): #post class to handle validation of posts
     title: str
     content: str
     published: bool = True
 
+
+#///////////////  DATABASE CONNECTION /////////////////////////////////////////////////////////////////////
 while True:
     try:
         conn = psycopg2.connect(host = 'localhost', dbname = 'API(tut)_DB', user = 'postgres', password = '4u2nV@5302P', cursor_factory=RealDictCursor)
@@ -34,20 +39,29 @@ while True:
 
 
 
-#add an array of posts jus for testing while i dont have a database yet
-my_posts =[{"title": "Title of post 1", "content": "Content of post 1", "published": True, "rating": 1, "id": 11111}, 
-           {"title": "Title of post 2", "content": "Content of post 2", "published": False, "rating": None, "id": 11112}]
 
+#add an array of posts jus for testing while i dont have a database yet
+#my_posts =[{"title": "Title of post 1", "content": "Content of post 1", "published": True, "rating": 1, "id": 11111}, 
+#           {"title": "Title of post 2", "content": "Content of post 2", "published": False, "rating": None, "id": 11112}]
+
+
+
+
+
+#///////////////////////////// FUNCTIONS ///////////////////////////////////////////////////////////////////////////
 
 def findPost(id):  # simple for loop to find post with ID: id 
-    for p in my_posts:
-        if p["id"] == id:
-            return p
+    cursor.execute("""SELECT * FROM posts WHERE id = %s""", (str(id)))   
+    p = cursor.fetchone()
+    return p
 
-def findIndex(id):     # function to delete a post when given a specific post ID
+#def findIndex(id):     # function to delete a post when given a specific post ID
     for i, p in enumerate(my_posts): #this functionality wil change when we start saving posts in an actual databaase
         if p["id"] == id:
             return i
+        
+
+#/////////////////////////////  OPERATIONS  ///////////////////////////////////////////////////////////////////
 
 @app.get("/") #decorator references app(instance of fats API you are using) and specifys file path to the changes you are making
 async def root(): #init the function and specify its name
@@ -57,16 +71,14 @@ async def root(): #init the function and specify its name
 def get_posts():
     cursor.execute("""SELECT * FROM posts""")
     posts = cursor.fetchall()
-    print(posts)
     return{"data": posts}#in postman now displays whole array as json array
 
 @app.post("/post", status_code=status.HTTP_201_CREATED)
 def create_post(post: Post, response: Response):
-    post_dict = post.model_dump()
-    post_dict["id"] = randrange(0, 999999999)
-    print(post_dict["id"])
-    my_posts.append(post_dict)
-    return {"data": post_dict}#return the whole post to display on postman
+    cursor.execute("""INSERT INTO posts (title, content, published) VALUES (%s, %s, %s) RETURNING *""", (post.title, post.content, post.published))
+    new_post = cursor.fetchone()
+    conn.commit()
+    return {"data": new_post}#return the whole post to display on postman
 
 
 
@@ -86,26 +98,17 @@ def get_post(id: int, response: Response):  #you can validage the input like thi
 
 @app.delete("/post/{id}") #pretty simple to delete  post at this point, especially as posts are just saved in an array
 def delete_post(id: int):
-    index = findIndex(id)
-    if index == None:
-         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"No post exists with ID: {id}")
-    my_posts.pop(index)
+    cursor.execute(""" DELETE FROM posts WHERE id = %s""", (str(id)))
+    conn.commit()
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
 @app.put("/post/{id}") #Functionality for updating posts
 def update_post(id: int, post: Post):
-    index = findIndex(id)
-    if index == None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"No post exists with ID: {id}")
-    post_dict = post.model_dump() 
-    post_dict["id"] = id
-    my_posts[index] = post_dict
+    cursor.execute("""UPDATE posts SET title = %s, content = %s, published = %s WHERE id = %s""", (post.title, post.content, post.published, (str(id))))
+    conn.commit()
     return{"message": f"Posta ID: {id}, has been updated"}
 
-#//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-
-     
+#///////////////////////////////  NOTES  //////////////////////////////////////////////////////////
 
 #uvicorn API.APP.main:app --reload
