@@ -25,6 +25,10 @@ class Post(BaseModel): #post class to handle validation of posts
     content: str
     published: bool = True
 
+class User(BaseModel):
+    username: str
+    password: str
+
 
 #///////////////  DATABASE CONNECTION /////////////////////////////////////////////////////////////////////
 while True:
@@ -121,6 +125,62 @@ def update_post(id: int, post: Post):
         conn.commit()
     return{"data": uPost}
 
+
+#//////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+@app.post("/users", status_code=status.HTTP_201_CREATED)
+def create_user(user: User, response: Response):
+    cursor.execute("""INSERT INTO users (username, password) VALUES (%s, %s) RETURNING *""", (user.username, user.password))
+    new_user = cursor.fetchone()
+    conn.commit()
+    return{"Data": new_user}
+
+@app.get("/users")
+def show_all_users():
+    cursor.execute("""SELECT * FROM users ORDER BY id ASC""")
+    aUsers = cursor.fetchall()
+    return{"data": aUsers}
+
+@app.get("/users/{id}")
+def show_one_user(id: int):
+    try:
+        cursor.execute("""SELECT * FROM users WHERE id = %s""", str(id))
+        wUser = cursor.fetchone()
+    except:
+        wUser = None
+
+    if wUser == None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"No user with ID: {id}")
+    else:
+        return{"Data": wUser}
+
+
+@app.put("/users/{id}")
+def update_user(user: User, id: int):
+    cursor.execute("""UPDATE users SET username = %s, Password = %s WHERE id = %s RETURNING *""", (user.username, user.password, str(id)))
+    nUser = cursor.fetchone()
+    conn.commit()
+    if nUser == None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"No user with ID: {id}")
+    return{"Data": nUser}
+
+@app.delete("/users/{id}")
+def delete_user(id: int):
+    try:
+        cursor.execute("""DELETE FROM users WHERE id = %s""", str(id))
+        conn.commit()
+    except:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+
 #///////////////////////////////  NOTES  //////////////////////////////////////////////////////////
 
 #uvicorn API.APP.main:app --reload
+
+#/////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+
+
