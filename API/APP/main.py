@@ -19,14 +19,16 @@ from .database import *
 
 #///////////////////////////  STUFF  ////////////////////////////////////////////////////////////
 
-models.Base.metadata.create_all(bind=engine)
+models.Base.metadata.create_all(bind=engine)#creates a DB table if there isnt one already
 
 
 app = FastAPI()
 
 @app.get("/sqlalchemy")
 def test(db: Session = Depends(get_db)):
-    return{"Status": "Success"}
+
+    posts = db.query(models.Post).all()
+    return{'data': posts}
 
 #///////////////  DATABASE CONNECTION /////////////////////////////////////////////////////////////////////
 while True:
@@ -75,9 +77,10 @@ async def root(): #init the function and specify its name
 
 
 @app.get("/post")
-def get_posts():
-    cursor.execute("""SELECT * FROM posts""")
-    posts = cursor.fetchall()
+def get_posts(db: Session = Depends(get_db)):
+    posts = db.query(models.Post).all()
+    #cursor.execute("""SELECT * FROM posts""")
+    #posts = cursor.fetchall()
     return{"data": posts}#in postman now displays whole array as json array
 
 @app.post("/post", status_code=status.HTTP_201_CREATED)
