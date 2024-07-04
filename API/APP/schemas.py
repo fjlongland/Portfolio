@@ -6,6 +6,9 @@ class Post(BaseModel): #post class to handle validation of posts
     content: str
     published: bool = True
 
+class PostCreate(Post):
+    pass
+
 class User(BaseModel):
     username: str
     password: str

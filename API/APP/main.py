@@ -16,14 +16,13 @@ from .database import *
 #/////////////////////////////////////////////////////////////////////////////
 #use http://127.0.0.1:8000/redoc for a reformatted version of this documentation
 
-
 #///////////////////////////  STUFF  ////////////////////////////////////////////////////////////
 
 models.Base.metadata.create_all(bind=engine)#creates a DB table if there isnt one already
 
-
 app = FastAPI()
 
+#used this to test some stuff
 @app.get("/sqlalchemy")
 def test(db: Session = Depends(get_db)):
 
@@ -42,33 +41,25 @@ while True:
         print("Error: ", error)
         time.sleep(2)
 
-
-
-
 #add an array of posts jus for testing while i dont have a database yet
 #my_posts =[{"title": "Title of post 1", "content": "Content of post 1", "published": True, "rating": 1, "id": 11111}, 
 #           {"title": "Title of post 2", "content": "Content of post 2", "published": False, "rating": None, "id": 11112}]
 
-
-
-
-
 #///////////////////////////// FUNCTIONS ///////////////////////////////////////////////////////////////////////////
-
-def findPost(id):  # simple for loop to find post with ID: id 
-    try:
-        cursor.execute("""SELECT * FROM posts WHERE id = %s""", (str(id)))   
-        p = cursor.fetchone()
-    except:
-        p = None
-    return p
+#this function was used when i was still using an array to store my posts
+#def findPost(id):  # simple for loop to find post with ID: id 
+    #try:
+        #cursor.execute("""SELECT * FROM posts WHERE id = %s""", (str(id)))   
+        #p = cursor.fetchone()
+    #except:
+        #p = None
+    #return p
 
 #def findIndex(id):     # function to delete a post when given a specific post ID
-    for i, p in enumerate(my_posts): #this functionality wil change when we start saving posts in an actual databaase
-        if p["id"] == id:
-            return i
+    #for i, p in enumerate(my_posts): #this functionality wil change when we start saving posts in an actual databaase
+        #if p["id"] == id:
+            #return i
         
-
 #/////////////////////////////  OPERATIONS  ///////////////////////////////////////////////////////////////////
 
 @app.get("/") #decorator references app(instance of fats API you are using) and specifys file path to the changes you are making
@@ -84,7 +75,7 @@ def get_posts(db: Session = Depends(get_db)):
     return{"data": posts}#in postman now displays whole array as json array
 
 @app.post("/post", status_code=status.HTTP_201_CREATED)
-def create_post(post:schemas.Post, db: Session = Depends(get_db)):
+def create_post(post:schemas.PostCreate, db: Session = Depends(get_db)):
     new_post = models.Post(**post.model_dump())
     db.add(new_post)
     db.commit()
@@ -93,8 +84,6 @@ def create_post(post:schemas.Post, db: Session = Depends(get_db)):
     #new_post = cursor.fetchone()
     #conn.commit()
     return {"data": new_post}#return the whole post to display on postman
-
-
 
 @app.get("/post/{id}")
 def get_post(id: int, db: Session = Depends(get_db)):  #you can validage the input like this to make shure an int has been input(wors for all data types)
@@ -111,7 +100,6 @@ def get_post(id: int, db: Session = Depends(get_db)):  #you can validage the inp
         #print(wpost)  
     return{"post": wpost}
 
-
 @app.delete("/post/{id}") #pretty simple to delete  post at this point, especially as posts are just saved in an array
 def delete_post(id: int, db: Session = Depends(get_db)):
     wpost = db.query(models.Post).filter(models.Post.id == id)
@@ -127,9 +115,8 @@ def delete_post(id: int, db: Session = Depends(get_db)):
         #raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
-
 @app.put("/post/{id}") #Functionality for updating posts
-def update_post(id: int, post: schemas.Post, db: Session = Depends(get_db)):
+def update_post(id: int, post: schemas.PostCreate, db: Session = Depends(get_db)):
     upost = db.query(models.Post).filter(models.Post.id == id)
 
     fpost = upost.first()
@@ -146,9 +133,7 @@ def update_post(id: int, post: schemas.Post, db: Session = Depends(get_db)):
         #conn.commit()
     return{"data": upost.first()}
 
-
 #//////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
 
 @app.post("/users", status_code=status.HTTP_201_CREATED)
 def create_user(user: schemas.User, response: Response):
@@ -176,7 +161,6 @@ def show_one_user(id: int):
     else:
         return{"Data": wUser}
 
-
 @app.put("/users/{id}")
 def update_user(user: schemas.User, id: int):
     cursor.execute("""UPDATE users SET username = %s, Password = %s, email = %s WHERE id = %s RETURNING *""", (user.username, user.password, user.email, str(id)))
@@ -194,7 +178,6 @@ def delete_user(id: int):
     except:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
     return Response(status_code=status.HTTP_204_NO_CONTENT)
-
 
 #///////////////////////////////  NOTES  //////////////////////////////////////////////////////////
 
