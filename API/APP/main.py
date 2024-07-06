@@ -1,7 +1,7 @@
 from fastapi import FastAPI, Response, status, HTTPException, Depends
 from fastapi.params import Body
 from pydantic import BaseModel
-from typing import Optional
+from typing import Optional, List
 from random import randrange
 import psycopg2;
 from psycopg2.extras import RealDictCursor
@@ -67,14 +67,14 @@ async def root(): #init the function and specify its name
     return{"message:" "Hi There trveler!"} #code that runs in the function and makes changes at specified destiantion
 
 
-@app.get("/post")
+@app.get("/post", response_model=List[schemas.Post])
 def get_posts(db: Session = Depends(get_db)):
     posts = db.query(models.Post).all()
     #cursor.execute("""SELECT * FROM posts""")
     #posts = cursor.fetchall()
-    return{"data": posts}#in postman now displays whole array as json array
+    return posts#in postman now displays whole array as json array
 
-@app.post("/post", status_code=status.HTTP_201_CREATED)
+@app.post("/post", status_code=status.HTTP_201_CREATED, response_model=schemas.Post)
 def create_post(post:schemas.PostCreate, db: Session = Depends(get_db)):
     new_post = models.Post(**post.model_dump())
     db.add(new_post)
@@ -83,9 +83,9 @@ def create_post(post:schemas.PostCreate, db: Session = Depends(get_db)):
     #cursor.execute("""INSERT INTO posts (title, content, published) VALUES (%s, %s, %s) RETURNING *""", (post.title, post.content, post.published))
     #new_post = cursor.fetchone()
     #conn.commit()
-    return {"data": new_post}#return the whole post to display on postman
+    return new_post#return the whole post to display on postman
 
-@app.get("/post/{id}")
+@app.get("/post/{id}", response_model=schemas.Post)
 def get_post(id: int, db: Session = Depends(get_db)):  #you can validage the input like this to make shure an int has been input(wors for all data types)
     wpost = db.query(models.Post).filter(models.Post.id == id).first()
     #print(wpost)
@@ -98,9 +98,9 @@ def get_post(id: int, db: Session = Depends(get_db)):  #you can validage the inp
         #return{"message": f"Post with ID: {id} was not found"}
     #else:
         #print(wpost)  
-    return{"post": wpost}
+    return wpost
 
-@app.delete("/post/{id}") #pretty simple to delete  post at this point, especially as posts are just saved in an array
+@app.delete("/post/{id}", response_model=schemas.Post) #pretty simple to delete  post at this point, especially as posts are just saved in an array
 def delete_post(id: int, db: Session = Depends(get_db)):
     wpost = db.query(models.Post).filter(models.Post.id == id)
     if wpost.first() == None:
@@ -115,7 +115,7 @@ def delete_post(id: int, db: Session = Depends(get_db)):
         #raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
-@app.put("/post/{id}") #Functionality for updating posts
+@app.put("/post/{id}", response_model=schemas.Post) #Functionality for updating posts
 def update_post(id: int, post: schemas.PostCreate, db: Session = Depends(get_db)):
     upost = db.query(models.Post).filter(models.Post.id == id)
 
@@ -131,7 +131,7 @@ def update_post(id: int, post: schemas.PostCreate, db: Session = Depends(get_db)
         #raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
     #else:
         #conn.commit()
-    return{"data": upost.first()}
+    return upost.first()
 
 #//////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -184,7 +184,3 @@ def delete_user(id: int):
 #uvicorn API.APP.main:app --reload
 
 #/////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-
-
-
