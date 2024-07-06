@@ -136,7 +136,7 @@ def update_post(id: int, post: schemas.PostCreate, db: Session = Depends(get_db)
 #//////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 @app.post("/users", status_code=status.HTTP_201_CREATED)
-def create_user(user: schemas.User, response: Response):
+def create_user(user: schemas.UserCreate, response: Response):
     cursor.execute("""INSERT INTO users (username, password, email) VALUES (%s, %s, %s) RETURNING *""", (user.username, user.password, user.email))
     new_user = cursor.fetchone()
     conn.commit()
@@ -162,7 +162,7 @@ def show_one_user(id: int):
         return{"Data": wUser}
 
 @app.put("/users/{id}")
-def update_user(user: schemas.User, id: int):
+def update_user(user: schemas.UserCreate, id: int):
     cursor.execute("""UPDATE users SET username = %s, Password = %s, email = %s WHERE id = %s RETURNING *""", (user.username, user.password, user.email, str(id)))
     nUser = cursor.fetchone()
     conn.commit()
