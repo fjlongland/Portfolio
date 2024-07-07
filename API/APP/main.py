@@ -10,6 +10,7 @@ import email_validator
 from sqlalchemy.orm import Session
 from . import schemas, models, utils
 from .database import *
+from .routers import post, users
 
 
 
@@ -69,145 +70,15 @@ while True:
 async def root(): #init the function and specify its name
     return{"message:" "Hi There trveler!"} #code that runs in the function and makes changes at specified destiantion
 
-
-@app.get("/post", response_model=List[schemas.Post])
-def get_posts(db: Session = Depends(get_db)):
-    posts = db.query(models.Post).all()
-    #cursor.execute("""SELECT * FROM posts""")
-    #posts = cursor.fetchall()
-    return posts#in postman now displays whole array as json array
-
-@app.post("/post", status_code=status.HTTP_201_CREATED, response_model=schemas.Post)
-def create_post(post:schemas.PostCreate, db: Session = Depends(get_db)):
-    new_post = models.Post(**post.model_dump())
-    db.add(new_post)
-    db.commit()
-    db.refresh(new_post)
-    #cursor.execute("""INSERT INTO posts (title, content, published) VALUES (%s, %s, %s) RETURNING *""", (post.title, post.content, post.published))
-    #new_post = cursor.fetchone()
-    #conn.commit()
-    return new_post#return the whole post to display on postman
-
-@app.get("/post/{id}", response_model=schemas.Post)
-def get_post(id: int, db: Session = Depends(get_db)):  #you can validage the input like this to make shure an int has been input(wors for all data types)
-    wpost = db.query(models.Post).filter(models.Post.id == id).first()
-    #print(wpost)
-    #print(id)                               #make a response variable
-    #wpost = findPost(id)  #calls function to find post with ID: id
-    if wpost == None:
-        print("KYS")
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Post with ID: {id} was not found") #this does the same thing but better than the commented code V
-        #response.status_code = status.HTTP_404_NOT_FOUND  #this is how you ste the status code to be accurate
-        #return{"message": f"Post with ID: {id} was not found"}
-    #else:
-        #print(wpost)  
-    return wpost
-
-@app.delete("/post/{id}", response_model=schemas.Post) #pretty simple to delete  post at this point, especially as posts are just saved in an array
-def delete_post(id: int, db: Session = Depends(get_db)):
-    wpost = db.query(models.Post).filter(models.Post.id == id)
-    if wpost.first() == None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"No post was found with ID: {id}")
-    
-    wpost.delete()
-    db.commit()
-    #try:
-        #cursor.execute(""" DELETE FROM posts WHERE id = %s""", (str(id)))
-        #conn.commit()
-    #except:
-        #raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
-    return Response(status_code=status.HTTP_204_NO_CONTENT)
-
-@app.put("/post/{id}", response_model=schemas.Post) #Functionality for updating posts
-def update_post(id: int, post: schemas.PostCreate, db: Session = Depends(get_db)):
-    upost = db.query(models.Post).filter(models.Post.id == id)
-
-    fpost = upost.first()
-    if fpost == None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"No post with ID:{id} was found")
-    
-    upost.update(post.model_dump(), synchronize_session=False)
-    db.commit()
-    #cursor.execute("""UPDATE posts SET title = %s, content = %s, published = %s WHERE id = %s RETURNING *""", (post.title, post.content, post.published, (str(id))))
-    #uPost = cursor.fetchone()
-    #if uPost == None:
-        #raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
-    #else:
-        #conn.commit()
-    return upost.first()
-
 #//////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-@app.post("/users", status_code=status.HTTP_201_CREATED, response_model=schemas.User)
-def create_user(user: schemas.UserCreate, db: Session = Depends(get_db)):
-
-    # HASH THE PASSWORD - User.password
-    user.password = utils.hash(user.password)
-
-    new_user = models.User(**user.model_dump())
-    db.add(new_user)
-    db.commit()
-    db.refresh(new_user)
-    #cursor.execute("""INSERT INTO users (username, password, email) VALUES (%s, %s, %s) RETURNING *""", (user.username, user.password, user.email))
-    #new_user = cursor.fetchone()
-    #conn.commit()
-    return new_user
-
-@app.get("/users", response_model= List[schemas.User])
-def show_all_users(db: Session = Depends(get_db)):
-    users = db.query(models.User).all()
-    #cursor.execute("""SELECT * FROM users ORDER BY id ASC""")
-    #aUsers = cursor.fetchall()
-    return users
-
-@app.get("/users/{id}", response_model=schemas.User)
-def show_one_user(id: int, db: Session = Depends(get_db)):
-    try:
-        user = db.query(models.User).filter(models.User.id == id).first()
-        #cursor.execute("""SELECT * FROM users WHERE id = %s""", str(id))
-        #wUser = cursor.fetchone()
-    except:
-        user = None
-
-    if user == None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"No user with ID: {id}")
-    else:
-        return user
-
-@app.put("/users/{id}", response_model=schemas.User)
-def update_user(user: schemas.UserCreate, id: int, db: Session = Depends(get_db)):
-    nUser = db.query(models.User).filter(models.User.id == id)
-
-    fUser = nUser.first()
-    #cursor.execute("""UPDATE users SET username = %s, Password = %s, email = %s WHERE id = %s RETURNING *""", (user.username, user.password, user.email, str(id)))
-    #nUser = cursor.fetchone()
-    #conn.commit()
-    if fUser == None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"No user with ID: {id}")
-    
-    nUser.update(user.model_dump(), synchronize_session=False)
-    db.commit()
-    
-    return nUser.first()
-
-@app.delete("/users/{id}")
-def delete_user(id: int, db: Session = Depends(get_db)):
-    dUser = db.query(models.User).filter(models.User.id == id)
-
-    if dUser.first() == None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
-    
-    dUser.delete()
-    db.commit()
-    #try:
-        #cursor.execute("""DELETE FROM users WHERE id = %s""", str(id))
-        #conn.commit()
-    #except:
-        #raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
-    return Response(status_code=status.HTTP_204_NO_CONTENT)
+app.include_router(post.router)#routs all http requests to the post directory
+app.include_router(users.router)
 
 #///////////////////////////////  NOTES  //////////////////////////////////////////////////////////
 
 #uvicorn API.APP.main:app --reload
+
+
 
 #/////////////////////////////////////////////////////////////////////////////////////////////////////////
