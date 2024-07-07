@@ -22,3 +22,11 @@ class UserCreate(BaseModel):
     username: str
     password: str
     email: EmailStr
+
+class User(BaseModel): #response model for users
+    username: str
+    email: str
+    id: int
+
+    class Config:
+        orm_model = True
