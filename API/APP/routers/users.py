@@ -5,9 +5,11 @@ from sqlalchemy.orm import Session
 from ..database import *
 
 
-router = APIRouter()
+router = APIRouter(
+    prefix="/users",
+    tags = ['users'])#prefix allows me to remove the repitition in all the path operations
 
-@router.post("/users", status_code=status.HTTP_201_CREATED, response_model=schemas.User)
+@router.post("/", status_code=status.HTTP_201_CREATED, response_model=schemas.User)
 def create_user(user: schemas.UserCreate, db: Session = Depends(get_db)):
 
     # HASH THE PASSWORD - User.password
@@ -22,14 +24,14 @@ def create_user(user: schemas.UserCreate, db: Session = Depends(get_db)):
     #conn.commit()
     return new_user
 
-@router.get("/users", response_model= List[schemas.User])
+@router.get("/", response_model= List[schemas.User])
 def show_all_users(db: Session = Depends(get_db)):
     users = db.query(models.User).all()
     #cursor.execute("""SELECT * FROM users ORDER BY id ASC""")
     #aUsers = cursor.fetchall()
     return users
 
-@router.get("/users/{id}", response_model=schemas.User)
+@router.get("/{id}", response_model=schemas.User)
 def show_one_user(id: int, db: Session = Depends(get_db)):
     try:
         user = db.query(models.User).filter(models.User.id == id).first()
@@ -43,7 +45,7 @@ def show_one_user(id: int, db: Session = Depends(get_db)):
     else:
         return user
 
-@router.put("/users/{id}", response_model=schemas.User)
+@router.put("/{id}", response_model=schemas.User)
 def update_user(user: schemas.UserCreate, id: int, db: Session = Depends(get_db)):
     nUser = db.query(models.User).filter(models.User.id == id)
 
@@ -59,7 +61,7 @@ def update_user(user: schemas.UserCreate, id: int, db: Session = Depends(get_db)
     
     return nUser.first()
 
-@router.delete("/users/{id}")
+@router.delete("/{id}")
 def delete_user(id: int, db: Session = Depends(get_db)):
     dUser = db.query(models.User).filter(models.User.id == id)
 

@@ -30,3 +30,8 @@ class User(BaseModel): #response model for users
 
     class Config:
         orm_model = True
+
+
+class UserLogin(BaseModel):
+    username: str
+    password: str

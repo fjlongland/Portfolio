@@ -10,7 +10,7 @@ import email_validator
 from sqlalchemy.orm import Session
 from . import schemas, models, utils
 from .database import *
-from .routers import post, users
+from .routers import post, users, auth
 
 
 
@@ -72,9 +72,9 @@ async def root(): #init the function and specify its name
 
 #//////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-app.include_router(post.router)#routs all http requests to the post directory
-app.include_router(users.router)
-
+app.include_router(post.router)#routs all http requestsfor /post to the post directory
+app.include_router(users.router)#routs all HTTP requests for / users to the users directory
+app.include_router(auth.router)
 #///////////////////////////////  NOTES  //////////////////////////////////////////////////////////
 
 #uvicorn API.APP.main:app --reload
