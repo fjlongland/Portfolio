@@ -1,4 +1,4 @@
-from .. import models, schemas
+from .. import models, schemas, oauth2
 from fastapi import FastAPI, Response, status, HTTPException, Depends, APIRouter
 from typing import List
 from sqlalchemy.orm import Session
@@ -17,8 +17,9 @@ def get_posts(db: Session = Depends(get_db)):
     return posts#in postman now displays whole array as json array
 
 @router.post("/", status_code=status.HTTP_201_CREATED, response_model=schemas.Post)
-def create_post(post:schemas.PostCreate, db: Session = Depends(get_db)):
+def create_post(post:schemas.PostCreate, db: Session = Depends(get_db), user_id: int = Depends(oauth2.get_current_user) ):
     new_post = models.Post(**post.model_dump())
+    print(user_id)
     db.add(new_post)
     db.commit()
     db.refresh(new_post)
