@@ -14,6 +14,7 @@ class PostCreate(PostBase):
 class Post(PostBase): #this class defines the response model for the postst that are returned in the appication
     id: int
     created_at: datetime
+    user_id_fk: int
 
 
     class Config:

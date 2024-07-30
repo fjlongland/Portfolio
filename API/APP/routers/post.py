@@ -9,7 +9,7 @@ router = APIRouter(
     tags = ['posts'])#prefix allows me to remove the repitition in all the path operations
 
 
-@router.get("/", response_model=List[schemas.Post])
+@router.get("/",  response_model=List[schemas.Post])
 def get_posts(db: Session = Depends(get_db), current_user: int = Depends(oauth2.get_current_user)):
     print(current_user.username)
     posts = db.query(models.Post).all()
@@ -19,7 +19,7 @@ def get_posts(db: Session = Depends(get_db), current_user: int = Depends(oauth2.
 
 @router.post("/", status_code=status.HTTP_201_CREATED, response_model=schemas.Post)
 def create_post(post:schemas.PostCreate, db: Session = Depends(get_db), current_user: int = Depends(oauth2.get_current_user) ):
-    new_post = models.Post(**post.model_dump())#second dependecy ensures that user has been authenticated before posting
+    new_post = models.Post(user_id_fk=current_user.id,**post.model_dump())#second dependecy ensures that user has been authenticated before posting
 
     print(current_user.username)
     db.add(new_post)
@@ -48,11 +48,20 @@ def get_post(id: int, db: Session = Depends(get_db), current_user: int = Depends
 
 @router.delete("/{id}", response_model=schemas.Post) #pretty simple to delete  post at this point, especially as posts are just saved in an array
 def delete_post(id: int, db: Session = Depends(get_db),current_user: int = Depends(oauth2.get_current_user)):
-    wpost = db.query(models.Post).filter(models.Post.id == id)
-    if wpost.first() == None:
+    wpost_query = db.query(models.Post).filter(models.Post.id == id)
+
+    wpost = wpost_query.first()
+
+    if wpost == None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"No post was found with ID: {id}")
+    
+
+
+    if wpost.user_id_fk != current_user.id:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="user not authorised to perform attempted action")
+    
     print (current_user.username)
-    wpost.delete()
+    wpost_query.delete()
     db.commit()
     #try:
         #cursor.execute(""" DELETE FROM posts WHERE id = %s""", (str(id)))
@@ -68,6 +77,9 @@ def update_post(id: int, post: schemas.PostCreate, db: Session = Depends(get_db)
     fpost = upost.first()
     if fpost == None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"No post with ID:{id} was found")
+    if fpost.user_id_fk != current_user.id:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN,detail="user not authorised to perform attempted action")
+
     print(current_user.username)
     upost.update(post.model_dump(), synchronize_session=False)
     db.commit()
