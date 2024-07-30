@@ -11,20 +11,6 @@ class PostBase(BaseModel): #post class to handle validation of posts
 class PostCreate(PostBase):
     pass
 
-class Post(PostBase): #this class defines the response model for the postst that are returned in the appication
-    id: int
-    created_at: datetime
-    user_id_fk: int
-
-
-    class Config:
-        orm_model = True
-
-class UserCreate(BaseModel):
-    username: str
-    password: str
-    email: EmailStr
-
 class User(BaseModel): #response model for users
     username: str
     email: str
@@ -33,6 +19,19 @@ class User(BaseModel): #response model for users
     class Config:
         orm_model = True
 
+class Post(PostBase): #this class defines the response model for the postst that are returned in the appication
+    id: int
+    created_at: datetime
+    user_id_fk: int
+    owner: User
+
+    class Config:
+        orm_model = True
+
+class UserCreate(BaseModel):
+    username: str
+    password: str
+    email: EmailStr
 
 class UserLogin(BaseModel):
     username: str
