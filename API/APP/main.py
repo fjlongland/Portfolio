@@ -1,14 +1,9 @@
-from fastapi import FastAPI, Response, status, HTTPException, Depends
-from fastapi.params import Body
-from pydantic import BaseModel
-from typing import Optional, List
-from random import randrange
+from fastapi import FastAPI, Depends
 import psycopg2;
 from psycopg2.extras import RealDictCursor
 import time
-import email_validator
 from sqlalchemy.orm import Session
-from . import schemas, models, utils
+from . import models
 from .database import *
 from .routers import post, users, auth
 
@@ -36,7 +31,11 @@ def test(db: Session = Depends(get_db)):
 #///////////////  DATABASE CONNECTION /////////////////////////////////////////////////////////////////////
 while True:
     try:
-        conn = psycopg2.connect(host = 'localhost', dbname = 'API(tut)_DB', user = 'postgres', password = '4u2nV@5302P', cursor_factory=RealDictCursor)
+        conn = psycopg2.connect(host = 'localhost', 
+                                dbname = 'API(tut)_DB', 
+                                user = 'postgres', 
+                                password = '4u2nV@5302P', 
+                                cursor_factory=RealDictCursor)
         cursor = conn.cursor()
         print("Connection Successful!")
         break

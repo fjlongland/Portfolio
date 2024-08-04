@@ -1,5 +1,5 @@
 from .. import models, schemas, oauth2
-from fastapi import FastAPI, Response, status, HTTPException, Depends, APIRouter
+from fastapi import Response, status, HTTPException, Depends, APIRouter
 from typing import List, Optional
 from sqlalchemy.orm import Session
 from ..database import *
@@ -9,7 +9,8 @@ router = APIRouter(
     tags = ['posts'])#prefix allows me to remove the repitition in all the path operations
 
 
-@router.get("/",  response_model=List[schemas.Post])
+@router.get("/",  
+            response_model=List[schemas.Post])
 def get_posts(db: Session = Depends(get_db), 
               current_user: int = Depends(oauth2.get_current_user), 
               limit: int = 10, skip: int = 0, search: Optional[str]=""):
@@ -20,8 +21,11 @@ def get_posts(db: Session = Depends(get_db),
     print(limit)
     return posts#in postman now displays whole array as json array
 
-@router.post("/", status_code=status.HTTP_201_CREATED, response_model=schemas.Post)
-def create_post(post:schemas.PostCreate, db: Session = Depends(get_db), 
+@router.post("/", 
+             status_code=status.HTTP_201_CREATED, 
+             response_model=schemas.Post)
+def create_post(post:schemas.PostCreate, 
+                db: Session = Depends(get_db), 
                 current_user: int = Depends(oauth2.get_current_user) ):
     new_post = models.Post(user_id_fk=current_user.id,**post.model_dump())#second dependecy ensures that user has been authenticated before posting
 
@@ -34,8 +38,10 @@ def create_post(post:schemas.PostCreate, db: Session = Depends(get_db),
     #conn.commit()
     return new_post#return the whole post to display on postman
 
-@router.get("/{id}", response_model=schemas.Post)
-def get_post(id: int, db: Session = Depends(get_db), 
+@router.get("/{id}", 
+            response_model=schemas.Post)
+def get_post(id: int, 
+             db: Session = Depends(get_db), 
              current_user: int = Depends(oauth2.get_current_user)):  #you can validage the input like this to make shure an int has been input(wors for all data types)
     wpost = db.query(models.Post).filter(models.Post.id == id).first()
     #print(wpost)
@@ -52,8 +58,10 @@ def get_post(id: int, db: Session = Depends(get_db),
         #print(wpost)  
     return wpost
 
-@router.delete("/{id}", response_model=schemas.Post) #pretty simple to delete  post at this point, especially as posts are just saved in an array
-def delete_post(id: int, db: Session = Depends(get_db), 
+@router.delete("/{id}", 
+               response_model=schemas.Post) #pretty simple to delete  post at this point, especially as posts are just saved in an array
+def delete_post(id: int, 
+                db: Session = Depends(get_db), 
                 current_user: int = Depends(oauth2.get_current_user)):
     wpost_query = db.query(models.Post).filter(models.Post.id == id)
 
@@ -79,8 +87,10 @@ def delete_post(id: int, db: Session = Depends(get_db),
         #raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
-@router.put("/{id}", response_model=schemas.Post) #Functionality for updating posts
-def update_post(id: int, post: schemas.PostCreate, 
+@router.put("/{id}", 
+            response_model=schemas.Post) #Functionality for updating posts
+def update_post(id: int, 
+                post: schemas.PostCreate, 
                 db: Session = Depends(get_db), 
                 current_user: int = Depends(oauth2.get_current_user)):
     upost = db.query(models.Post).filter(models.Post.id == id)
@@ -94,7 +104,8 @@ def update_post(id: int, post: schemas.PostCreate,
                             detail="user not authorised to perform attempted action")
 
     print(current_user.username)
-    upost.update(post.model_dump(), synchronize_session=False)
+    upost.update(post.model_dump(), 
+                 synchronize_session=False)
     db.commit()
     #cursor.execute("""UPDATE posts SET title = %s, content = %s, published = %s WHERE id = %s RETURNING *""", (post.title, post.content, post.published, (str(id))))
     #uPost = cursor.fetchone()
